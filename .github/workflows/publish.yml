@@ -29,12 +29,22 @@ jobs:
     - name: Build from TypeScript
       run: npm run build
 
-    - name: Move for package publishing
+    - name: Prepare build artifacts
       run: |
         mv .github/LICENSE LICENSE
         mv .github/README.md README.md
         mv src/setup dist/setup
 
+    - name: Create build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: package-files
+        path: |
+          dist
+          README.md
+          LICENSE
+          package.json
+          package-lock.json
 
   publish-package:
     needs: build
@@ -44,13 +54,16 @@ jobs:
       packages: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 'latest'
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: package-files
+          path: .
 
       - name: Publish package
         run: |
