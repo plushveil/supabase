@@ -2,13 +2,13 @@
   "name": "@plushveil/supabase",
   "version": "0.0.7",
   "description": "automatically sets up supabase for server side usage with sensible defaults",
-  "main": "dist/database.js",
+  "main": "dist/database.mjs",
   "type": "module",
   "directories": {
     "test": "tests"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsdown src/database.ts --clean --d dist --sourcemap --tsconfig tsconfig.json && tsc",
     "test": "npm run -s test:lint",
     "test:lint": "eslint"
   },
@@ -31,6 +31,7 @@
     "eslint": "^9.39.2",
     "jiti": "^2.6.1",
     "neostandard": "^0.12.2",
+    "tsdown": "^0.19.0-beta.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.51.0"
   },
