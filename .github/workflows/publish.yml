@@ -29,6 +29,11 @@ jobs:
     - name: Build from TypeScript
       run: npm run build
 
+    - name: Move LICENSE and README to root
+      run: |
+        cp .github/LICENSE LICENSE
+        cp .github/README.md README.md
+
   publish-package:
     needs: build
     runs-on: ubuntu-latest
