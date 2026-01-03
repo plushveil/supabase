@@ -36,7 +36,7 @@ jobs:
         mv src/setup dist/setup
 
     - name: Create build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v6
       with:
         name: package-files
         path: |
@@ -60,7 +60,7 @@ jobs:
           node-version: 'latest'
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v7
         with:
           name: package-files
           path: .
