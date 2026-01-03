@@ -18,6 +18,7 @@ import semver from 'semver'
 
 const __filename = url.fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
+const __root = getRoot()
 const extensions = ['.sql', '.pgsql']
 const pool = await executeDatabaseSetup()
 
@@ -26,7 +27,7 @@ export default pool
 /**
  * Runs all migrations.
  */
-async function executeDatabaseSetup (SUPABASE_PROJECT_REF?: string, SUPABASE_PASSWORD?: string, SUPABASE_HOST?: string) : Promise<Pool> {
+async function executeDatabaseSetup (SUPABASE_PROJECT_REF?: string, SUPABASE_PASSWORD?: string, SUPABASE_HOST?: string) : Promise<{ connect: typeof connect } & Pool> {
   SUPABASE_PROJECT_REF = SUPABASE_PROJECT_REF || getEnvironmentVariable('SUPABASE_PROJECT_REF')
   SUPABASE_PASSWORD = SUPABASE_PASSWORD || getEnvironmentVariable('SUPABASE_PASSWORD')
   SUPABASE_HOST = SUPABASE_HOST || getEnvironmentVariable('SUPABASE_HOST')
@@ -43,8 +44,7 @@ async function executeDatabaseSetup (SUPABASE_PROJECT_REF?: string, SUPABASE_PAS
   const run = getClientQueries(client, getAllQueries(path.join(__dirname, 'setup')))
   await run.create_migrations_table()
 
-  const root = getRoot()
-  const schemaFolder = path.join(root, 'database')
+  const schemaFolder = path.join(__root, 'database')
   const files = (await getAllFilesInFolder(schemaFolder)).filter(file => extensions.includes(path.extname(file)))
 
   // map version to statements
@@ -98,15 +98,17 @@ async function executeDatabaseSetup (SUPABASE_PROJECT_REF?: string, SUPABASE_PAS
       rejectUnauthorized: false
     },
   })
-  pool.connect = connect
-  return pool
+
+  const poolConnect = pool.connect.bind(pool)
+  pool.connect = connect.bind(null, poolConnect)
+  return pool as Pool & { connect: typeof connect }
 }
 
 /**
  *
  */
-export async function connect () : Promise<PoolClient & { run: ReturnType<typeof getClientQueries> }> {
-  const client = await pool.connect() as PoolClient & { run: ReturnType<typeof getClientQueries> }
-  client.run = getClientQueries(client, getAllQueries(path.join(__dirname, 'queries')))
+export async function connect (connect?: Pool['connect']) : Promise<PoolClient & { sql: ReturnType<typeof getClientQueries> }> {
+  const client = (connect ? await connect() : await pool.connect()) as PoolClient & { sql: ReturnType<typeof getClientQueries> }
+  client.sql = getClientQueries(client, getAllQueries(path.join(__root, 'database', 'sql')))
   return client
 }
