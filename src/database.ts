@@ -109,6 +109,6 @@ async function executeDatabaseSetup (SUPABASE_PROJECT_REF?: string, SUPABASE_PAS
  */
 export async function connect (connect?: Pool['connect']) : Promise<PoolClient & { sql: ReturnType<typeof getClientQueries> }> {
   const client = (connect ? await connect() : await pool.connect()) as PoolClient & { sql: ReturnType<typeof getClientQueries> }
-  client.sql = getClientQueries(client, getAllQueries(path.join(__root, 'database', 'sql')))
+  client.sql = client.sql || getClientQueries(client, getAllQueries(path.join(__root, 'database', 'sql')))
   return client
 }
