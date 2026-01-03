@@ -1,0 +1,41 @@
+{
+  "name": "@plushveil/supabase",
+  "version": "0.0.1",
+  "description": "automatically sets up supabase for server side usage with sensible defaults",
+  "main": "package.mjs",
+  "type": "module",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "npm run -s test:lint",
+    "test:lint": "eslint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/plushveil/supabase.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/plushveil/supabase/issues"
+  },
+  "homepage": "https://github.com/plushveil/supabase#readme",
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/node": "^25.0.3",
+    "@types/pg": "^8.16.0",
+    "@types/semver": "^7.7.1",
+    "eslint": "^9.39.2",
+    "jiti": "^2.6.1",
+    "neostandard": "^0.12.2",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.51.0"
+  },
+  "dependencies": {
+    "pg": "^8.16.3",
+    "pgsql-ast-parser": "^12.0.1",
+    "semver": "^7.7.3"
+  }
+}

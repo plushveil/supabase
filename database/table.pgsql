@@ -1,0 +1,9 @@
+-- @version 1.0.0
+CREATE TABLE test_table (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- @version 1.0.1
+ALTER TABLE test_table ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
