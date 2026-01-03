@@ -1,6 +1,6 @@
 {
   "name": "@plushveil/supabase",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "automatically sets up supabase for server side usage with sensible defaults",
   "main": "package.mjs",
   "type": "module",
