@@ -24,12 +24,6 @@ const pool = await executeDatabaseSetup()
 
 export default pool
 
-const c = await pool.connect()
-console.log((await c.sql.now()).rows)
-
-c.release()
-pool.end()
-
 /**
  * Runs all migrations.
  */
@@ -116,6 +110,6 @@ async function executeDatabaseSetup (SUPABASE_PROJECT_REF?: string, SUPABASE_PAS
 export async function connect (connect?: Pool['connect']) : Promise<PoolClient & { sql: ReturnType<typeof getClientQueries> }> {
   if (!connect) return await pool.connect()
   const client = await connect() as PoolClient & { sql: ReturnType<typeof getClientQueries> }
-  client.sql = client.sql || getClientQueries(client, getAllQueries(path.join(__root, 'database', 'sql')))
+  client.sql = getClientQueries(client, getAllQueries(path.join(__root, 'database', 'sql')))
   return client
 }
