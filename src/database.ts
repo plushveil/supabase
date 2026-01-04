@@ -58,7 +58,7 @@ async function executeDatabaseSetup (SUPABASE_PROJECT_REF?: string, SUPABASE_PAS
       const pos = getPositionFromLocation(content, start)
       const version = getVersionFromLocation(versionStatements, start)
       if (!versionStatementMap[version]) versionStatementMap[version] = []
-      versionStatementMap[version].push({ file, pos, query: content.slice(start, end) })
+      versionStatementMap[version].push({ file, pos, query: content.slice(start, end + 1) })
     }
   }
 
