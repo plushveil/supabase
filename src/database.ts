@@ -9,10 +9,7 @@ import getAllQueries from './utils/getAllQueries.ts'
 import getEnvironmentVariable from './utils/env.ts'
 import getRoot from './utils/getRoot.ts'
 import getAllFilesInFolder from './utils/getAllFilesInFolder.ts'
-import getVersionFromLocation from './utils/getVersionFromLocation.ts'
-import getPositionFromLocation from './utils/getPositionFromLocation.ts'
 
-import { parse } from 'pgsql-ast-parser'
 import { Client, Pool } from 'pg'
 import semver from 'semver'
 
@@ -48,18 +45,32 @@ async function executeDatabaseSetup (SUPABASE_PROJECT_REF?: string, SUPABASE_PAS
   const files = (await getAllFilesInFolder(schemaFolder)).filter(file => extensions.includes(path.extname(file)))
 
   // map version to statements
-  const versionStatementMap : Record<string, { file: string, pos: { line: number, column: number }, query: string }[]> = {}
+  const versionStatementMap : Record<string, { file: string, query: string }[]> = {}
+  const add = (version: string, file: string, query: string) : void => {
+    query = query.trim()
+    while (query.startsWith('--\n')) query = query.slice(3).trim()
+    while (query.endsWith('\n--')) query = query.slice(0, -3).trim()
+
+    if (query.split('\n').every(line => line.trim().startsWith('--'))) return
+    versionStatementMap[version] = versionStatementMap[version] || []
+    versionStatementMap[version].push({ file, query })
+  }
+
   for (const file of files) {
     const content = await fs.readFile(file, 'utf-8')
-    const versionStatements = [...content.matchAll(/@version\s+([^ \n]+)/g)]
-    const statements = parse(content, { locationTracking: true })
-    for (const statement of statements) {
-      const { start, end: endOfStatement } = statement._location!
-      const end = content.indexOf(';', endOfStatement) + 1 || content.length
-      const pos = getPositionFromLocation(content, start)
-      const version = getVersionFromLocation(versionStatements, start)
-      if (!versionStatementMap[version]) versionStatementMap[version] = []
-      versionStatementMap[version].push({ file, pos, query: content.slice(start, end) })
+    const versionComments = [...content.matchAll(/@version\s+([^ \n]+)/g)]
+    if (versionComments.length === 0) {
+      add('0.0.0', file, content)
+      continue
+    }
+    if (versionComments[0].index !== 0) add('0.0.0', file, content.slice(0, versionComments[0].index))
+    for (let i = 0; i < versionComments.length; i++) {
+      const comment = versionComments[i]
+      const version = comment[1]
+      const start = comment.index
+      const end = versionComments[i + 1] ? versionComments[i + 1].index : content.length
+      const query = '-- ' + content.slice(start, end)
+      add(version, file, query)
     }
   }
 
@@ -68,18 +79,20 @@ async function executeDatabaseSetup (SUPABASE_PROJECT_REF?: string, SUPABASE_PAS
   const currentVersion = currentMigrationVersionRows[0]?.name || null
 
   // execute migrations
-  let current: { file: string, pos: { line: number, column: number }, query: string } | null = null
+  let current: { file: string, query: string, version: string } | null = null
   try {
     await client.query('BEGIN')
     const versions = Object.keys(versionStatementMap).sort((a, b) => semver.compare(a, b))
+    let i = 0
     for (const version of versions) {
       if (currentVersion === null || semver.gt(version, currentVersion)) {
         const statements = versionStatementMap[version]
         for (const statement of statements) {
-          current = statement
+          current = { ...statement, version }
           await client.query(statement.query)
         }
-        const timestamp = new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 14)
+        i++
+        const timestamp = Number(new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 14)) + i
         await run.record_migration_version(`${timestamp}`, version, statements)
       }
     }
@@ -87,7 +100,7 @@ async function executeDatabaseSetup (SUPABASE_PROJECT_REF?: string, SUPABASE_PAS
   } catch (error) {
     await client.query('ROLLBACK')
     if (error instanceof Error && current) {
-      error.message = error.message + `\n    in file://${current.file}:${current.pos.line}:${current.pos.column}`
+      error.message = error.message + `\n    in file://${current.file} (near @version ${current.version})`
     }
     throw error
   }
