@@ -42,10 +42,10 @@ async function executeDatabaseSetup (SUPABASE_PROJECT_REF?: string, SUPABASE_PAS
   await run.create_migrations_table()
 
   const schemaFolder = path.join(__root, 'database')
-  const rcpFolder = path.join(__root, 'database', 'rcp')
+  const rpcFolder = path.join(__root, 'database', 'rpc')
   const files = [
     ...(await getAllFilesInFolder(schemaFolder)).filter(file => extensions.includes(path.extname(file))),
-    ...(await getAllFilesInFolder(rcpFolder)).filter(file => extensions.includes(path.extname(file))),
+    ...(await getAllFilesInFolder(rpcFolder)).filter(file => extensions.includes(path.extname(file))),
   ]
 
   // map version to statements
