@@ -65,7 +65,7 @@ async function executeDatabaseSetup (SUPABASE_PROJECT_REF?: string, SUPABASE_PAS
 
   // get current migration version
   const { rows: currentMigrationVersionRows } = await run.get_current_migration_version()
-  const currentVersion = currentMigrationVersionRows.length > 0 ? currentMigrationVersionRows[0].name : '0.0.0'
+  const currentVersion = currentMigrationVersionRows[0]?.name || null
 
   // execute migrations
   let current: { file: string, pos: { line: number, column: number }, query: string } | null = null
@@ -73,7 +73,7 @@ async function executeDatabaseSetup (SUPABASE_PROJECT_REF?: string, SUPABASE_PAS
     await client.query('BEGIN')
     const versions = Object.keys(versionStatementMap).sort((a, b) => semver.compare(a, b))
     for (const version of versions) {
-      if (currentVersion === '0.0.0' || semver.gt(version, currentVersion)) {
+      if (currentVersion === null || semver.gt(version, currentVersion)) {
         const statements = versionStatementMap[version]
         for (const statement of statements) {
           current = statement
