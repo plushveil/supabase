@@ -16,6 +16,7 @@ export default function getAllQueries (dir: string): Query[] {
   const queries: Query[] = []
 
   function readDirRecursive (currentDir: string): void {
+    if (!fs.existsSync(currentDir)) return
     const entries = fs.readdirSync(currentDir, { withFileTypes: true })
     for (const entry of entries) {
       const fullPath = path.join(currentDir, entry.name)
