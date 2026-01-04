@@ -54,11 +54,12 @@ async function executeDatabaseSetup (SUPABASE_PROJECT_REF?: string, SUPABASE_PAS
     const versionStatements = [...content.matchAll(/@version\s+([^ \n]+)/g)]
     const statements = parse(content, { locationTracking: true })
     for (const statement of statements) {
-      const { start, end } = statement._location!
+      const { start, end: endOfStatement } = statement._location!
+      const end = content.indexOf(';', endOfStatement) + 1 || content.length
       const pos = getPositionFromLocation(content, start)
       const version = getVersionFromLocation(versionStatements, start)
       if (!versionStatementMap[version]) versionStatementMap[version] = []
-      versionStatementMap[version].push({ file, pos, query: content.slice(start, end + 1) })
+      versionStatementMap[version].push({ file, pos, query: content.slice(start, end) })
     }
   }
 
