@@ -4,6 +4,7 @@
   "description": "automatically sets up supabase for server side usage with sensible defaults",
   "main": "dist/database.mjs",
   "type": "module",
+  "types": "./dist/database.d.mts",
   "directories": {
     "test": "tests"
   },
