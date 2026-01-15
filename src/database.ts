@@ -10,7 +10,7 @@ import getEnvironmentVariable from './utils/env.ts'
 import getRoot from './utils/getRoot.ts'
 import getAllFilesInFolder from './utils/getAllFilesInFolder.ts'
 
-import { Client, Pool } from 'pg'
+import { Pool } from 'pg'
 import semver from 'semver'
 
 const __filename = url.fileURLToPath(import.meta.url)
@@ -28,14 +28,37 @@ async function executeDatabaseSetup (SUPABASE_PROJECT_REF?: string, SUPABASE_PAS
   SUPABASE_PROJECT_REF = SUPABASE_PROJECT_REF || getEnvironmentVariable('SUPABASE_PROJECT_REF')
   SUPABASE_PASSWORD = SUPABASE_PASSWORD || getEnvironmentVariable('SUPABASE_PASSWORD')
   SUPABASE_HOST = SUPABASE_HOST || getEnvironmentVariable('SUPABASE_HOST')
-  const SUPABASE_CONNECTION_STRING = `postgresql://postgres.${SUPABASE_PROJECT_REF}:${SUPABASE_PASSWORD}@${SUPABASE_HOST}:5432/postgres`
 
-  const client = new Client({
-    connectionString: SUPABASE_CONNECTION_STRING,
-    ssl: {
-      rejectUnauthorized: false
-    },
-  })
+  if (!SUPABASE_PROJECT_REF) throw new Error('Missing "SUPABASE_PROJECT_REF" environment variable.')
+  if (!SUPABASE_PASSWORD) throw new Error('Missing "SUPABASE_PASSWORD" environment variable.')
+  if (!SUPABASE_HOST) throw new Error('Missing "SUPABASE_HOST" environment variable.')
+
+  let setupPool: Pool
+  let client: PoolClient
+  let tries = 0
+  while (true) {
+    try {
+      setupPool = new Pool({
+        user: `postgres.${SUPABASE_PROJECT_REF}`,
+        host: SUPABASE_HOST,
+        database: 'postgres',
+        password: SUPABASE_PASSWORD,
+        port: 5432,
+        ssl: { rejectUnauthorized: false }
+      })
+      client = await setupPool.connect()
+      tries++
+      break
+    } catch (err) {
+      if (tries >= 5) throw err
+      await new Promise((resolve) => setTimeout(resolve, 1000 * tries))
+      continue
+    }
+  }
+
+  if (!setupPool || !client) {
+    throw new Error('Failed to create database pool or client.')
+  }
 
   await client.connect()
   const run = getClientQueries(client, getAllQueries(path.join(__dirname, 'setup')))
@@ -108,15 +131,9 @@ async function executeDatabaseSetup (SUPABASE_PROJECT_REF?: string, SUPABASE_PAS
     }
     throw error
   }
-  await client.end()
+  client.release()
 
-  const pool = new Pool({
-    connectionString: SUPABASE_CONNECTION_STRING,
-    ssl: {
-      rejectUnauthorized: false
-    },
-  })
-
+  const pool = setupPool
   const poolConnect = pool.connect.bind(pool)
   pool.connect = connect.bind(null, poolConnect)
   return pool as Pool & { connect: typeof connect }
