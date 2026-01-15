@@ -47,9 +47,9 @@ async function executeDatabaseSetup (SUPABASE_PROJECT_REF?: string, SUPABASE_PAS
         ssl: { rejectUnauthorized: false }
       })
       client = await setupPool.connect()
-      tries++
       break
     } catch (err) {
+      tries++
       if (tries >= 5) throw err
       await new Promise((resolve) => setTimeout(resolve, 1000 * tries))
       continue
@@ -60,7 +60,6 @@ async function executeDatabaseSetup (SUPABASE_PROJECT_REF?: string, SUPABASE_PAS
     throw new Error('Failed to create database pool or client.')
   }
 
-  await client.connect()
   const run = getClientQueries(client, getAllQueries(path.join(__dirname, 'setup')))
   await run.create_migrations_table()
 
