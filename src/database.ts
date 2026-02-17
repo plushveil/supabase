@@ -64,10 +64,18 @@ async function executeDatabaseSetup (SUPABASE_PROJECT_REF?: string, SUPABASE_PAS
   await run.create_migrations_table()
 
   const schemaFolder = path.join(__root, 'database')
+  const tablesFolder = path.join(__root, 'database', 'tables')
   const rpcFolder = path.join(__root, 'database', 'rpc')
+  const functionsFolder = path.join(__root, 'database', 'functions')
+  const dataFolder = path.join(__root, 'database', 'data')
+  const utilitiesFolder = path.join(__root, 'database', 'utilities')
   const files = [
     ...(await getAllFilesInFolder(schemaFolder)).filter(file => extensions.includes(path.extname(file))),
+    ...(await getAllFilesInFolder(tablesFolder)).filter(file => extensions.includes(path.extname(file))),
     ...(await getAllFilesInFolder(rpcFolder)).filter(file => extensions.includes(path.extname(file))),
+    ...(await getAllFilesInFolder(functionsFolder)).filter(file => extensions.includes(path.extname(file))),
+    ...(await getAllFilesInFolder(dataFolder)).filter(file => extensions.includes(path.extname(file))),
+    ...(await getAllFilesInFolder(utilitiesFolder)).filter(file => extensions.includes(path.extname(file))),
   ]
 
   // map version to statements
@@ -141,9 +149,10 @@ async function executeDatabaseSetup (SUPABASE_PROJECT_REF?: string, SUPABASE_PAS
 /**
  *
  */
-export async function connect (connect?: Pool['connect']) : Promise<PoolClient & { sql: ReturnType<typeof getClientQueries> }> {
+export async function connect (connect?: Pool['connect']) : Promise<PoolClient & { sql: ReturnType<typeof getClientQueries> } & { statements: ReturnType<typeof getClientQueries> }> {
   if (!connect) return await pool.connect()
-  const client = await connect() as PoolClient & { sql: ReturnType<typeof getClientQueries> }
+  const client = await connect() as PoolClient & { sql: ReturnType<typeof getClientQueries> } & { statements: ReturnType<typeof getClientQueries> }
   client.sql = getClientQueries(client, getAllQueries(path.join(__root, 'database', 'sql')))
+  client.statements = getClientQueries(client, getAllQueries(path.join(__root, 'database', 'statements')))
   return client
 }
