@@ -1,6 +1,6 @@
 {
   "name": "@plushveil/supabase",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "description": "automatically sets up supabase for server side usage with sensible defaults",
   "main": "dist/database.mjs",
   "type": "module",
