@@ -69,6 +69,8 @@ async function executeDatabaseSetup (SUPABASE_PROJECT_REF?: string, SUPABASE_PAS
   const functionsFolder = path.join(__root, 'database', 'functions')
   const dataFolder = path.join(__root, 'database', 'data')
   const utilitiesFolder = path.join(__root, 'database', 'utilities')
+  const utilsFolder = path.join(__root, 'database', 'utils')
+  const viewsFolder = path.join(__root, 'database', 'views')
   const files = [
     ...(await getAllFilesInFolder(schemaFolder)).filter(file => extensions.includes(path.extname(file))),
     ...(await getAllFilesInFolder(tablesFolder)).filter(file => extensions.includes(path.extname(file))),
@@ -76,6 +78,8 @@ async function executeDatabaseSetup (SUPABASE_PROJECT_REF?: string, SUPABASE_PAS
     ...(await getAllFilesInFolder(functionsFolder)).filter(file => extensions.includes(path.extname(file))),
     ...(await getAllFilesInFolder(dataFolder)).filter(file => extensions.includes(path.extname(file))),
     ...(await getAllFilesInFolder(utilitiesFolder)).filter(file => extensions.includes(path.extname(file))),
+    ...(await getAllFilesInFolder(utilsFolder)).filter(file => extensions.includes(path.extname(file))),
+    ...(await getAllFilesInFolder(viewsFolder)).filter(file => extensions.includes(path.extname(file))),
   ]
 
   // map version to statements
